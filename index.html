@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OfflineWord</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--bg:#e6e8ec;--bar:#f7f8fa;--ac:#2b579a;--bd:#cfd3d9}
+*{box-sizing:border-box}
+body{margin:0;font:14px system-ui,sans-serif;background:var(--bg);display:flex;flex-direction:column;height:100vh}
+#top{background:var(--ac);color:#fff;padding:6px 12px;display:flex;gap:12px;align-items:center}
+#top b{font-size:15px}#top input{background:#ffffff22;border:0;color:#fff;padding:4px 8px;border-radius:4px}
+#bar,#bar2{background:var(--bar);border-bottom:1px solid var(--bd);padding:6px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.g{display:flex;gap:2px;align-items:center;padding-right:6px;margin-right:2px;border-right:1px solid var(--bd)}
+button,select{height:28px;border:1px solid transparent;background:transparent;border-radius:4px;cursor:pointer;font:inherit;padding:0 7px}
+button:hover,select:hover{background:#e1e5ec;border-color:var(--bd)}
+input[type=color]{width:26px;height:26px;border:0;padding:0;background:none}
+#zoomv{width:44px;text-align:center}
+#wrap{flex:1;overflow:auto;padding:24px;display:flex;justify-content:center}
+#zoomer{transform-origin:top center}
+#page{white-space:pre-wrap;position:relative;width:794px;min-height:1123px;background:#fff;padding:96px;box-shadow:0 2px 10px #0003;outline:none;line-height:1.5}
+#page table{border-collapse:collapse;margin:6px 0}
+#page td,#page th{border:1px solid #444;padding:6px;min-width:50px}
+#page img{max-width:100%}
+.obj{position:absolute;border:1px dashed transparent;resize:both;overflow:hidden;min-width:30px;min-height:30px}
+.obj:hover,.obj.sel{border-color:var(--ac)}
+.obj.tb{border:1px solid #444;background:#fff;padding:4px}
+.obj svg{width:100%;height:100%;display:block}
+.obj .h{position:absolute;top:0;left:0;right:0;height:8px;cursor:move;background:#2b579a33;display:none}
+.obj:hover .h,.obj.sel .h{display:block}
+dialog{border:1px solid var(--bd);border-radius:8px;padding:16px}
+dialog label{display:flex;justify-content:space-between;gap:12px;margin:6px 0}
+dialog input,dialog select{width:110px;border:1px solid var(--bd)}
+#status{background:var(--bar);border-top:1px solid var(--bd);padding:3px 12px;font-size:12px;color:#555}
+@media print{body{display:block;height:auto;background:#fff}#top,#bar,#bar2,#status,#navp{display:none}#page::before,#page::after{display:none!important}#wrap{padding:0;overflow:visible}#zoomer{transform:none!important}#page{box-shadow:none;width:auto;padding:0}.obj{border-color:transparent!important;resize:none}.obj .h{display:none!important}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div id="top"><b>📄 OfflineWord</b><input id="title" value="Document1" aria-label="Title">
+<span style="margin-left:auto;font-size:12px;opacity:.8" id="saved"></span></div>
+<div id="bar">
+ <div class="g"><button data-t="new">New</button><button data-t="open">📂 Open</button><button data-t="save">💾 Save</button><button data-t="saveas">Save As…</button><button data-t="savehtml">HTML</button><button data-t="print">🖨 Print</button><button data-t="pdf">📑 PDF</button></div>
+ <div class="g"><button data-c="undo">↶ Undo</button><button data-c="redo">↷ Redo</button><button data-t="cut">Cut</button><button data-t="copy">Copy</button><button data-t="paste">Paste</button></div>
+ <div class="g"><select id="font"><option>Calibri</option><option>Arial</option><option>Times New Roman</option><option>Georgia</option><option>Verdana</option><option>Courier New</option><option>Tahoma</option></select>
+ <select id="size"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></div>
+ <div class="g"><button data-c="bold"><b>B</b></button><button data-c="italic"><i>I</i></button><button data-c="underline"><u>U</u></button><button data-c="strikeThrough"><s>S</s></button>
+ <button data-c="subscript">x₂</button><button data-c="superscript">x²</button>
+ <input type="color" id="fc" value="#000000" title="Text color"><input type="color" id="hc" value="#ffff00" title="Highlight"></div>
+ <div class="g"><button data-c="justifyLeft">⬅</button><button data-c="justifyCenter">↔</button><button data-c="justifyRight">➡</button><button data-c="justifyFull">☰</button>
+ <button data-c="insertUnorderedList">• List</button><button data-c="insertOrderedList">1. List</button><button data-c="outdent">⇤</button><button data-c="indent">⇥</button>
+ <button data-t="para">¶ Paragraph…</button></div>
+ <div class="g"><button data-t="table">▦ Table</button><button data-t="pic">🖼 Picture</button><button data-t="textbox">🔤 Text box</button>
+ <select id="shape"><option value="">◇ Shapes</option><option>rect</option><option>round</option><option>ellipse</option><option>triangle</option><option>diamond</option><option>line</option><option>arrow</option><option>star</option></select>
+ <input type="color" id="shc" value="#4472c4" title="Shape color"><button data-t="hr">― Line</button></div>
+ <div class="g" style="border:0"><button data-t="zo">−</button><span id="zoomv">100%</span><button data-t="zi">+</button><button data-t="zf">Fit</button></div>
+</div>
+<div id="wrap"><div id="zoomer"><div id="page" contenteditable="true" spellcheck="true"><p>Start typing here…</p></div></div></div>
+<div id="status"><span id="stat">0 words</span></div>
+<input type="file" id="fpic" accept="image/*" hidden><input type="file" id="fopen" accept=".docx,.html,.htm" hidden>
+<dialog id="pd"><form method="dialog"><b>Paragraph</b>
+<label>Alignment<select id="pa"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option><option value="justify">Justify</option></select></label>
+<label>Line spacing<select id="pl"><option>1</option><option>1.15</option><option selected>1.5</option><option>2</option><option>2.5</option><option>3</option></select></label>
+<label>Indent left (px)<input id="pi" type="number" value="0"></label>
+<label>First line (px)<input id="pf" type="number" value="0"></label>
+<label>Space before (px)<input id="pb" type="number" value="0"></label>
+<label>Space after (px)<input id="pe" type="number" value="8"></label>
+<div style="text-align:right;margin-top:10px"><button value="cancel">Cancel</button> <button value="ok" id="pok" style="background:var(--ac);color:#fff">OK</button></div></form></dialog>
+<script src="docx.js"></script>
+<script>
+const $=s=>document.querySelector(s),page=$('#page');let zoom=1,range=null,selObj=null;
+const KEY='offlineword.doc';
+const save=()=>{range=getSel()||range};
+function getSel(){const s=getSelection();return s.rangeCount&&page.contains(s.anchorNode)?s.getRangeAt(0).cloneRange():null}
+function restore(){page.focus();if(range){const s=getSelection();s.removeAllRanges();s.addRange(range)}}
+document.addEventListener('selectionchange',()=>{const r=getSel();if(r)range=r});
+const cmd=(c,v=null)=>{restore();document.execCommand(c,false,v);store()};
+document.querySelectorAll('#bar button').forEach(b=>b.addEventListener('mousedown',e=>e.preventDefault()));
+$('#bar').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.c)cmd(b.dataset.c);else if(b.dataset.t)act(b.dataset.t)});
+document.execCommand('styleWithCSS',false,true);
+$('#font').onchange=e=>cmd('fontName',e.target.value);
+$('#size').onchange=e=>cmd('fontSize',e.target.value);
+$('#fc').oninput=e=>cmd('foreColor',e.target.value);
+$('#hc').oninput=e=>cmd('hiliteColor',e.target.value);
+$('#shape').onchange=e=>{if(e.target.value)shape(e.target.value);e.target.value=''};
+function setZoom(z){zoom=Math.min(3,Math.max(.25,z));$('#zoomer').style.transform=`scale(${zoom})`;$('#zoomv').textContent=Math.round(zoom*100)+'%';
+ $('#zoomer').style.height=(page.offsetHeight*zoom)+'px';$('#zoomer').style.width=(page.offsetWidth*zoom)+'px'}
+async function act(t){switch(t){
+ case'new':if(confirm('Discard current document?')){page.innerHTML='<p><br></p>';$('#title').value='Document1';store()}break;
+ case'open':openDoc();break;
+ case'save':saveDoc();break;
+ case'saveas':saveDoc(true,'docx');break;
+ case'savehtml':saveDoc(true,'html');break;
+ case'print':window.print();break;
+ case'pdf':$('#saved').textContent='In the print window, set Destination to "Save as PDF"';setTimeout(()=>window.print(),50);break;
+ case'cut':restore();document.execCommand('cut');store();break;
+ case'copy':restore();document.execCommand('copy');break;
+ case'paste':restore();if(navigator.clipboard&&navigator.clipboard.readText)navigator.clipboard.readText().then(t=>{restore();document.execCommand('insertText',false,t);store()}).catch(()=>alert('Use Ctrl+V to paste'));else alert('Use Ctrl+V to paste');break;
+ case'para':openPara();break;
+ case'table':{const r=+await ask('Rows',3),c=+await ask('Columns',3);if(!r||!c)return;let h='<table>';for(let i=0;i<r;i++){h+='<tr>'+'<td><br></td>'.repeat(c)+'</tr>'}cmd('insertHTML',h+'</table><p><br></p>');break}
+ case'pic':save();$('#fpic').click();break;
+ case'textbox':addObj('<div contenteditable="true" style="width:100%;height:100%;outline:none">Text box</div>','tb',200,80);break;
+ case'hr':cmd('insertHorizontalRule');break;
+ case'zi':setZoom(zoom+.1);break;case'zo':setZoom(zoom-.1);break;
+ case'zf':setZoom(($('#wrap').clientWidth-60)/page.offsetWidth);break}}
+$('#fpic').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{cmd('insertImage',r.result)};r.readAsDataURL(f);e.target.value=''};
+$('#fopen').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f){fh=null;loadFile(f)}};
+let fh=null;const DOCX_MIME='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+async function loadFile(f){try{let html;
+ if(/\.docx$/i.test(f.name))html=await DOCX.toHtml(await f.arrayBuffer());
+ else if(/\.html?$/i.test(f.name)){const d=new DOMParser().parseFromString(await f.text(),'text/html');const p=d.querySelector('#page');html=p?p.innerHTML:d.body.innerHTML}
+ else throw Error('Unsupported file type. Open a .docx or .html file (old .doc files: save as .docx in Word first).');
+ page.innerHTML=html;$('#title').value=f.name.replace(/\.\w+$/,'');store();setZoom(zoom);$('#wrap').scrollTop=0}catch(err){alert('Could not open file: '+err.message)}}
+async function openDoc(){if(window.showOpenFilePicker){try{const[h]=await showOpenFilePicker({types:[{description:'Word / HTML documents',accept:{[DOCX_MIME]:['.docx'],'text/html':['.html','.htm']}}]});fh=h;await loadFile(await h.getFile())}catch(e){if(e.name!=='AbortError')alert(e.message)}}else $('#fopen').click()}
+async function saveDoc(as,fmt){fmt=fmt||(fh&&/\.html?$/i.test(fh.name)?'html':'docx');
+ try{const blob=fmt==='docx'?DOCX.toBlob(page):new Blob([wrapDoc()],{type:'text/html'}),name=($('#title').value||'Document')+'.'+fmt;
+  if(window.showSaveFilePicker){if(as||!fh||!fh.name.toLowerCase().endsWith('.'+fmt))fh=await showSaveFilePicker({suggestedName:name,types:[fmt==='docx'?{description:'Word Document',accept:{[DOCX_MIME]:['.docx']}}:{description:'HTML',accept:{'text/html':['.html']}}]});
+   const w=await fh.createWritable();await w.write(blob);await w.close();$('#title').value=fh.name.replace(/\.\w+$/,'');$('#saved').textContent='Saved to '+fh.name}
+  else if(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()){const d=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result.split(',')[1]);f.readAsDataURL(blob)});const u=await Capacitor.Plugins.Filesystem.writeFile({path:name,data:d,directory:'DOCUMENTS'});$('#saved').textContent='Saved to Documents/'+name;try{await Capacitor.Plugins.Share.share({title:name,url:u.uri})}catch(e){}}
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000);$('#saved').textContent='Downloaded '+name}
+ }catch(e){if(e.name!=='AbortError')alert('Save failed: '+e.message)}}
+function wrapDoc(){return`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${$('#title').value}</title><style>#page{max-width:794px;margin:auto;line-height:1.5}table{border-collapse:collapse}td{border:1px solid #444;padding:6px}.obj{position:absolute}.obj.tb{border:1px solid #444}</style></head><body><div id="page" style="position:relative">${page.innerHTML}</div></body></html>`}
+// floating objects (text box / shapes)
+function addObj(inner,cls,w,h){const o=document.createElement('div');o.className='obj '+cls;o.contentEditable='false';o.style.cssText=`left:120px;top:140px;width:${w}px;height:${h}px`;o.innerHTML='<div class="h" title="Drag to move"></div>'+inner;page.appendChild(o);select(o);store()}
+const P={rect:'<rect x="1" y="1" width="98" height="98" fill="C" stroke="#222"/>',round:'<rect x="1" y="1" width="98" height="98" rx="18" fill="C" stroke="#222"/>',ellipse:'<ellipse cx="50" cy="50" rx="49" ry="49" fill="C" stroke="#222"/>',triangle:'<polygon points="50,2 98,98 2,98" fill="C" stroke="#222"/>',diamond:'<polygon points="50,2 98,50 50,98 2,50" fill="C" stroke="#222"/>',line:'<line x1="2" y1="98" x2="98" y2="2" stroke="C" stroke-width="3"/>',arrow:'<polygon points="2,35 60,35 60,10 98,50 60,90 60,65 2,65" fill="C" stroke="#222"/>',star:'<polygon points="50,2 61,38 98,38 68,60 79,96 50,74 21,96 32,60 2,38 39,38" fill="C" stroke="#222"/>'};
+function shape(n){addObj(`<svg viewBox="0 0 100 100" preserveAspectRatio="none">${P[n].replaceAll('C',$('#shc').value)}</svg>`,'shape',140,n=='line'?60:120)}
+function select(o){document.querySelectorAll('.obj.sel').forEach(x=>x.classList.remove('sel'));selObj=o;if(o)o.classList.add('sel')}
+let drag=null;
+page.addEventListener('pointerdown',e=>{const o=e.target.closest('.obj');if(!o){select(null);return}select(o);
+ if(e.target.classList.contains('h')||(o.classList.contains('shape')&&!(e.offsetX>o.clientWidth-16&&e.offsetY>o.clientHeight-16))){drag={o,x:e.clientX,y:e.clientY,l:o.offsetLeft,t:o.offsetTop};e.preventDefault()}});
+addEventListener('pointermove',e=>{if(!drag)return;drag.o.style.left=drag.l+(e.clientX-drag.x)/zoom+'px';drag.o.style.top=drag.t+(e.clientY-drag.y)/zoom+'px'});
+addEventListener('pointerup',()=>{if(drag){drag=null;store()}});
+addEventListener('keydown',e=>{if(selObj&&e.key==='Delete'&&!selObj.contains(document.activeElement.closest('[contenteditable=true]:not(#page)'))&&document.activeElement===document.body||(selObj&&e.key==='Delete'&&selObj.classList.contains('shape'))){selObj.remove();selObj=null;store()}
+ if(e.ctrlKey&&(e.key==='+'||e.key==='=')){e.preventDefault();setZoom(zoom+.1)}if(e.ctrlKey&&e.key==='-'){e.preventDefault();setZoom(zoom-.1)}
+ if(e.ctrlKey&&e.key==='s'){e.preventDefault();act('save')}});
+$('#wrap').addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();setZoom(zoom+(e.deltaY<0?.1:-.1))}},{passive:false});
+// print / PDF: use the document name as the default file name
+let oldTitle=document.title;
+addEventListener('beforeprint',()=>{oldTitle=document.title;document.title=$('#title').value||'Document';select(null)});
+addEventListener('afterprint',()=>{document.title=oldTitle});
+// paragraph settings
+const blk=n=>{while(n&&n!==page){if(n.nodeType==1&&/^(P|DIV|H[1-6]|LI|TD|BLOCKQUOTE)$/.test(n.nodeName))return n;n=n.parentNode}return null};
+function blocksInRange(){const r=range;if(!r)return[];const out=new Set();const a=blk(r.startContainer),b=blk(r.endContainer);if(a)out.add(a);if(b)out.add(b);
+ if(a&&b&&a!==b)page.querySelectorAll('p,div:not(.obj),h1,h2,h3,h4,h5,h6,li').forEach(x=>{if(r.intersectsNode(x)&&!x.closest('.obj'))out.add(x)});return[...out]}
+function openPara(){save();$('#pd').showModal()}
+$('#pok').onclick=()=>{blocksInRange().forEach(b=>{Object.assign(b.style,{textAlign:$('#pa').value,lineHeight:$('#pl').value,marginLeft:$('#pi').value+'px',textIndent:$('#pf').value+'px',marginTop:$('#pb').value+'px',marginBottom:$('#pe').value+'px'})});store()};
+// autosave + stats
+function store(){try{localStorage.setItem(KEY,JSON.stringify({t:$('#title').value,h:page.innerHTML}));$('#saved').textContent='Saved locally '+new Date().toLocaleTimeString()}catch(e){}stats()}
+function stats(){const t=page.innerText.trim();$('#stat').textContent=(t?t.split(/\s+/).length:0)+' words · '+t.length+' characters';$('#zoomer').style.height=(page.offsetHeight*zoom)+'px'}
+page.addEventListener('input',store);$('#title').addEventListener('input',store);
+try{const d=JSON.parse(localStorage.getItem(KEY));if(d){page.innerHTML=d.h;$('#title').value=d.t}}catch(e){}
+stats();setZoom(1);
+if('serviceWorker'in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js');
+</script>
+<script src="features.js"></script>
+</body>
+</html>
